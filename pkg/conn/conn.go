@@ -1,6 +1,6 @@
 package conn
 
-import "github.com/surrealdb/surrealdb.go/pkg/model"
+import "github.com/pokt-foundation/surrealdb.go/pkg/model"
 
 type Connection interface {
 	Connect(url string) (Connection, error)

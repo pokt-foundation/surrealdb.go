@@ -9,8 +9,8 @@ import (
 
 	rawslog "log/slog"
 
+	"github.com/pokt-foundation/surrealdb.go/pkg/logger/slog"
 	"github.com/stretchr/testify/require"
-	"github.com/surrealdb/surrealdb.go/pkg/logger/slog"
 )
 
 type testMethod struct {

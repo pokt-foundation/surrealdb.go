@@ -9,13 +9,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/surrealdb/surrealdb.go/pkg/model"
+	"github.com/pokt-foundation/surrealdb.go/pkg/model"
 
 	gorilla "github.com/gorilla/websocket"
-	"github.com/surrealdb/surrealdb.go/internal/rpc"
-	"github.com/surrealdb/surrealdb.go/pkg/conn"
-	"github.com/surrealdb/surrealdb.go/pkg/logger"
-	"github.com/surrealdb/surrealdb.go/pkg/rand"
+	"github.com/pokt-foundation/surrealdb.go/internal/rpc"
+	"github.com/pokt-foundation/surrealdb.go/pkg/conn"
+	"github.com/pokt-foundation/surrealdb.go/pkg/logger"
+	"github.com/pokt-foundation/surrealdb.go/pkg/rand"
 )
 
 const (

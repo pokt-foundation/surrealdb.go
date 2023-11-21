@@ -2,11 +2,11 @@
 
 The official SurrealDB library for Golang.
 
-[![](https://img.shields.io/badge/status-beta-ff00bb.svg?style=flat-square)](https://github.com/surrealdb/surrealdb.go) 
+[![](https://img.shields.io/badge/status-beta-ff00bb.svg?style=flat-square)](https://github.com/pokt-foundation/surrealdb.go) 
 [![](https://img.shields.io/badge/docs-view-44cc11.svg?style=flat-square)](https://surrealdb.com/docs/integration/libraries/golang)
-[![Go Reference](https://pkg.go.dev/badge/github.com/surrealdb/surrealdb.go.svg)](https://pkg.go.dev/github.com/surrealdb/surrealdb.go)
-[![Go Report Card](https://goreportcard.com/badge/github.com/surrealdb/surrealdb.go)](https://goreportcard.com/report/github.com/surrealdb/surrealdb.go)
-[![](https://img.shields.io/badge/license-Apache_License_2.0-00bfff.svg?style=flat-square)](https://github.com/surrealdb/surrealdb.go)
+[![Go Reference](https://pkg.go.dev/badge/github.com/pokt-foundation/surrealdb.go.svg)](https://pkg.go.dev/github.com/pokt-foundation/surrealdb.go)
+[![Go Report Card](https://goreportcard.com/badge/github.com/pokt-foundation/surrealdb.go)](https://goreportcard.com/report/github.com/pokt-foundation/surrealdb.go)
+[![](https://img.shields.io/badge/license-Apache_License_2.0-00bfff.svg?style=flat-square)](https://github.com/pokt-foundation/surrealdb.go)
 [![Mentioned in Awesome Go](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go)
 
 ## Getting Started
@@ -16,7 +16,7 @@ For instructions on how to follow SurrealDB, follow [Installation Guide](https:/
 ### Installation
 
 ```bash
-go get github.com/surrealdb/surrealdb.go
+go get github.com/pokt-foundation/surrealdb.go
 ```
 
 ### Usage
@@ -24,7 +24,7 @@ go get github.com/surrealdb/surrealdb.go
 ```go
 package main
 import (
-	"github.com/surrealdb/surrealdb.go"
+	"github.com/pokt-foundation/surrealdb.go"
 
 )
 
