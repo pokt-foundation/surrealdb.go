@@ -41,6 +41,15 @@ type testUser struct {
 	ID                string `json:"id,omitempty"`
 }
 
+// a simple user struct for testing
+type testUserWithFriend[I any] struct {
+	marshal.Basemodel `table:"user_with_friend"`
+	Username          string `json:"username,omitempty"`
+	Password          string `json:"password,omitempty"`
+	ID                string `json:"id,omitempty"`
+	Friends           []I    `json:"friends,omitempty"`
+}
+
 func TestSurrealDBSuite(t *testing.T) {
 	SurrealDBSuite := new(SurrealDBTestSuite)
 	SurrealDBSuite.connImplementations = make(map[string]conn.Connection)
@@ -119,17 +128,17 @@ func (s *SurrealDBTestSuite) SetupSuite() {
 // Sign with the root user
 // Can be used with any user
 func signin(s *SurrealDBTestSuite) interface{} {
-	signin, err := s.db.Signin(map[string]interface{}{
-		"user": "root",
-		"pass": "root",
-	})
+	authData := &surrealdb.Auth{
+		Username: "root",
+		Password: "root",
+	}
+	signin, err := s.db.Signin(authData)
 	s.Require().NoError(err)
 	return signin
 }
 
 func (s *SurrealDBTestSuite) TestLiveViaMethod() {
-	live, err := s.db.Live("users")
-
+	live, err := s.db.Live("users", false)
 	defer func() {
 		_, err = s.db.Kill(live)
 		s.Require().NoError(err)
@@ -145,6 +154,37 @@ func (s *SurrealDBTestSuite) TestLiveViaMethod() {
 	s.Require().NoError(e)
 	notification := <-notifications
 	s.Require().Equal(model.CreateAction, notification.Action)
+	s.Require().Equal(live, notification.ID)
+}
+
+func (s *SurrealDBTestSuite) TestLiveWithOptionsViaMethod() {
+	// create a user
+	userData, e := s.db.Create("users", map[string]interface{}{
+		"username": "johnny",
+		"password": "123",
+	})
+	s.Require().NoError(e)
+	var user []testUser
+	err := marshal.Unmarshal(userData, &user)
+	s.Require().NoError(err)
+
+	live, err := s.db.Live("users", true)
+	defer func() {
+		_, err = s.db.Kill(live)
+		s.Require().NoError(err)
+	}()
+
+	notifications, er := s.db.LiveNotifications(live)
+	s.Require().NoError(er)
+
+	// update the user
+	_, e = s.db.Update(user[0].ID, map[string]interface{}{
+		"password": "456",
+	})
+	s.Require().NoError(e)
+
+	notification := <-notifications
+	s.Require().Equal(model.UpdateAction, notification.Action)
 	s.Require().Equal(live, notification.ID)
 }
 
@@ -191,6 +231,92 @@ func (s *SurrealDBTestSuite) TestDelete() {
 	// Delete the users...
 	_, err = s.db.Delete("users")
 	s.Require().NoError(err)
+}
+
+func (s *SurrealDBTestSuite) TestFetch() {
+	// Define initial user slice
+	userSlice := []testUserWithFriend[string]{
+		{
+			ID:       "users:arthur",
+			Username: "arthur",
+			Password: "deer",
+			Friends:  []string{"users:john"},
+		},
+		{
+			ID:       "users:john",
+			Username: "john",
+			Password: "wolf",
+			Friends:  []string{"users:arthur"},
+		},
+	}
+
+	// Initialize data using users
+	for _, v := range userSlice {
+		data, err := s.db.Create(v.ID, v)
+		s.NoError(err)
+		s.NotNil(data)
+	}
+
+	// User rows are individually fetched
+	s.Run("Run fetch for individual users", func() {
+		s.T().Skip("TODO(gh-116) Fetch unimplemented")
+		for _, v := range userSlice {
+			res, err := s.db.Query("select * from $table fetch $fetchstr;", map[string]interface{}{
+				"record":   v.ID,
+				"fetchstr": "friends.*",
+			})
+			s.NoError(err)
+			s.NotEmpty(res)
+		}
+	})
+
+	s.Run("Run fetch on hardcoded query", func() {
+		query := "SELECT * from users:arthur fetch friends.*"
+		res, err := s.db.Query(query, map[string]interface{}{})
+		s.NoError(err)
+		s.NotEmpty(res)
+
+		userSlice, err := marshal.SmartUnmarshal[testUserWithFriend[testUserWithFriend[interface{}]]](res, err)
+		s.NoError(err)
+
+		s.Require().Len(userSlice, 1)
+		s.Require().Len(userSlice[0].Friends, 1)
+		s.Require().NotEmpty(userSlice[0].Friends[0], 1)
+	})
+
+	s.Run("Run fetch on query using map[string]interface{} for thing and fetchString", func() {
+		s.T().Skip("TODO(gh-116) Fetch unimplemented")
+		res, err := s.db.Query("select * from $record fetch $fetchstr;", map[string]interface{}{
+			"record":   "users",
+			"fetchstr": "friends.*",
+		})
+		s.NoError(err)
+		s.NotEmpty(res)
+	})
+
+	s.Run("Run fetch on query using map[string]interface{} for fetchString", func() {
+		s.T().Skip("TODO(gh-116) Fetch unimplemented")
+		res, err := s.db.Query("select * from users fetch $fetchstr;", map[string]interface{}{
+			"fetchstr": "friends.*",
+		})
+		s.NoError(err)
+		s.NotEmpty(res)
+	})
+
+	s.Run("Run fetch on query using map[string]interface{} for thing or tableName", func() {
+		res, err := s.db.Query("select * from $record fetch friends.*;", map[string]interface{}{
+			"record": "users:arthur",
+		})
+		s.NoError(err)
+		s.NotEmpty(res)
+
+		userSlice, err := marshal.SmartUnmarshal[testUserWithFriend[testUserWithFriend[interface{}]]](res, err)
+		s.NoError(err)
+
+		s.Require().Len(userSlice, 1)
+		s.Require().Len(userSlice[0].Friends, 1)
+		s.Require().NotEmpty(userSlice[0].Friends[0], 1)
+	})
 }
 
 func (s *SurrealDBTestSuite) TestInsert() {
@@ -291,7 +417,8 @@ func (s *SurrealDBTestSuite) TestCreate() {
 		data = append(data,
 			testUser{
 				Username: "johnny",
-				Password: "123"},
+				Password: "123",
+			},
 			testUser{
 				Username: "joe",
 				Password: "123",
